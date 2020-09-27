@@ -17,9 +17,6 @@ local bor = bit.bor
 
 local byte = string.byte
 
-local debug = logger.dbg
-local is_debug_enabled = logger.is_debug_enabled
-
 local amqp_frame = {}
 
 
@@ -1106,9 +1103,8 @@ local methods_ = {
 local function method_frame(data,channel)
   local frame = { channel = channel }
   local b = buffer.new(data)
-  if is_debug_enabled() then
-    debug("[method_frame]",b:hex_dump())
-  end
+  debug("[method_frame]",b:hex_dump())
+
   local class_id = b:get_i16()
   local method_id = b:get_i16()
   frame.class_id = class_id
@@ -1134,10 +1130,8 @@ local function header_frame(data,channel)
   local frame = { channel = channel, properties = {} }
   local b = buffer.new(data)
 
-  if is_debug_enabled() then
-    debug("[header_frame]",b:hex_dump())
-  end
-
+  logger:debug("[header_frame]",b:hex_dump())
+  
   frame.class_id = b:get_i16()
   frame.weight = b:get_i16()
   frame.body_size = b:get_i64()
@@ -1208,9 +1202,9 @@ end
 local function body_frame(data,channel)
   local frame = { channel = channel }
   local b = buffer.new(data)
-  if is_debug_enabled() then
-    debug("[body_frame]",b:hex_dump())
-  end
+  
+  logger:debug("[body_frame]",b:hex_dump())
+  
   frame.body = b:payload()
   return frame
 end
@@ -1245,9 +1239,7 @@ function amqp_frame.consume_frame(ctx)
   end
 
   local b = buffer.new(data)
-  if is_debug_enabled() then
-    debug("[frame] take the first 7 octets: ",b:hex_dump())
-  end
+  logger:debug("[frame] take the first 7 octets: ",b:hex_dump())
 
   local typ = b:get_i8()
   local channel = b:get_i16()
@@ -1462,7 +1454,7 @@ function amqp_frame:encode()
   local typ = self.typ
   if not typ then
     local err = "no frame type specified."
-    logger.error("[frame.encode] " .. err)
+    logger:error("[frame.encode] " .. err)
     return nil,err
   end
 
@@ -1476,7 +1468,7 @@ function amqp_frame:encode()
     return encode_heartbeat_frame(self)
   else
     local err = "invalid frame type" .. tostring(typ)
-    logger.error("[frame.encode]" .. err)
+    logger:error("[frame.encode]" .. err)
     return nil, err
   end
 end
